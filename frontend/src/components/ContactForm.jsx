@@ -2,21 +2,30 @@ import React, { useState } from "react";
 import { postContact } from "../lib/api.js";
 
 export default function ContactForm() {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
-  const [form, setForm] = useState({
+  const initialForm = {
     name: "", email: "", phone: "", itemType: "Palety",
     quantity: "", location: "", message: "",
     wantDelivery: false, smallShipper: false, company: ""
-  });
+  };
+
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [form, setForm] = useState(initialForm);
 
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true); setError(null); setResult(null);
     try {
       const data = await postContact(form);
-      setResult(data?.message || "Odesláno.");
+      if (data?.ok) {
+        setResult(data?.message || "Odesláno.");
+        // reset formuláře
+        setForm(initialForm);
+        e.currentTarget?.reset?.();
+      } else {
+        setError(data?.error || "Chyba při odesílání formuláře.");
+      }
     } catch (err) {
       setError(err?.response?.data?.error || "Chyba při odesílání formuláře.");
     } finally {
