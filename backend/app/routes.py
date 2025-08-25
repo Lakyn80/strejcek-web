@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from .extensions import limiter, mail
+from .extensions import mail  # limiter odstraněn, zůstává jen mail (CORS se inituje v __init__.py)
 from flask_mail import Message
 from email_validator import validate_email, EmailNotValidError
 from .emailing import build_email_bodies
@@ -78,8 +78,15 @@ def _verify_recaptcha(token: str) -> bool:
 # API routes
 # -----------------------
 
+# ✅ CORS preflight (OPTIONS) pro /api/contact
+@api_bp.route("/contact", methods=["OPTIONS"])
+def contact_options():
+    # Flask-CORS doplní CORS hlavičky; 204 = No Content
+    return ("", 204)
+
+
 @api_bp.post("/contact")
-@limiter.limit(lambda: current_app.config.get("RATE_LIMIT", "5 per minute"))
+# limiter zcela odstraněn
 def contact():
     if not request.is_json:
         return jsonify({"ok": False, "error": "Očekáván JSON payload."}), 400
@@ -134,7 +141,7 @@ def contact():
             return jsonify({"ok": False, "error": f"E-mail se nepodařilo odeslat: {e}"}), 500
         return jsonify({"ok": False, "error": "E-mail se nepodařilo odeslat."}), 500
 
-    # ---- 2) Potvrzovací e-mail klientovi (plain + jednoduché HTML)
+    # ---- 2) Potvrzovací e-mail klientovi (plain + jednoduché HTML) — ÚPRAVENÁ PATIČKA
     client_email = (data.get("email") or "").strip()
     if _is_valid_email(client_email):
         client_subject = "Potvrzení: Vaše poptávka byla přijata"
@@ -147,7 +154,7 @@ def contact():
             f"- Lokalita: {data.get('location') or 'neuvedeno'}\n"
             f"- Zpráva: {data.get('message')}\n\n"
             "S pozdravem\n"
-            "Palety • Big-Bagy • Krabice Strejček"
+            "MPV-Deal Robin Strejček , Mob: +420 777 863 255"
         )
         client_html = f"""
             <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#111">
@@ -161,8 +168,7 @@ def contact():
               </ul>
               <p><strong>Zpráva:</strong><br/>{(data.get('message') or '').replace(chr(10), '<br/>')}</p>
               <hr style="border:none;border-top:1px solid #ddd;margin:16px 0"/>
-              <p>Palety • Big-Bagy • Krabice Strejček<br/>
-                 Polešovice u Uherského Hradiště</p>
+              <p>MPV-Deal Robin Strejček , Mob: +420 777 863 255</p>
             </div>
         """
 
