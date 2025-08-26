@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from .extensions import mail  # limiter odstraněn, zůstává jen mail (CORS se inituje v __init__.py)
+from .extensions import mail  # jen mail; CORS se inituje v __init__.py
 from flask_mail import Message
 from email_validator import validate_email, EmailNotValidError
 from .emailing import build_email_bodies
@@ -12,7 +12,8 @@ api_bp = Blueprint("api", __name__, url_prefix="/api")
 
 @api_bp.get("/health")
 def health():
-    return {"status": "ok", "time": datetime.utcnow().isoformat() + "Z"}
+    return {"ok": True, "service": "pvm-api"}, 200
+
 
 
 # -----------------------
@@ -78,15 +79,16 @@ def _verify_recaptcha(token: str) -> bool:
 # API routes
 # -----------------------
 
-# ✅ CORS preflight (OPTIONS) pro /api/contact
+# ✅ CORS preflight (OPTIONS) – aliasy pro /contact i /poptavka
 @api_bp.route("/contact", methods=["OPTIONS"])
+@api_bp.route("/poptavka", methods=["OPTIONS"])
 def contact_options():
-    # Flask-CORS doplní CORS hlavičky; 204 = No Content
     return ("", 204)
 
 
+# ✅ POST – aliasy pro /contact i /poptavka
 @api_bp.post("/contact")
-# limiter zcela odstraněn
+@api_bp.post("/poptavka")
 def contact():
     if not request.is_json:
         return jsonify({"ok": False, "error": "Očekáván JSON payload."}), 400
@@ -113,22 +115,22 @@ def contact():
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%SZ")
     subject = f"Nová poptávka – {data.get('itemType', 'Neuvedeno')} – Palety/Big-Bagy/Krabice Strejček"
 
-    # HTML + text pro admina (tvůj existující templating)
+    # HTML + text pro admina
     html_body, text_body = build_email_bodies(data, ip=ip, ua=ua, when=now)
 
-    # Reply-To nastavíme na klienta (jméno + jeho e-mail)
+    # Reply-To = klient
     reply_to_addr = formataddr((
         (data.get("name") or "").strip(),
         (data.get("email") or "").strip()
     ))
 
-    # ---- 1) E-mail tobě (adminovi)
+    # 1) E-mail adminovi
     admin_msg = Message(
         subject=subject,
         recipients=[recipient_admin],
         html=html_body,
         body=text_body,
-        sender=default_sender,      # CENTRUM: From musí být tvoje schránka
+        sender=default_sender,
         reply_to=reply_to_addr
     )
 
@@ -136,12 +138,11 @@ def contact():
         mail.send(admin_msg)
     except Exception as e:
         current_app.logger.exception("Mail send to admin failed")
-        # v DEBUGu vrať konkrétní chybu
         if current_app.config.get("DEBUG", False):
             return jsonify({"ok": False, "error": f"E-mail se nepodařilo odeslat: {e}"}), 500
         return jsonify({"ok": False, "error": "E-mail se nepodařilo odeslat."}), 500
 
-    # ---- 2) Potvrzovací e-mail klientovi (plain + jednoduché HTML) — ÚPRAVENÁ PATIČKA
+    # 2) Potvrzovací e-mail klientovi (původní text – NEMĚNIT)
     client_email = (data.get("email") or "").strip()
     if _is_valid_email(client_email):
         client_subject = "Potvrzení: Vaše poptávka byla přijata"
@@ -177,13 +178,12 @@ def contact():
             recipients=[client_email],
             body=client_text,
             html=client_html,
-            sender=default_sender,   # From = tvoje schránka (SMTP vyžaduje)
+            sender=default_sender,
             reply_to=formataddr(("Palety/Big-Bagy/Krabice Strejček", recipient_admin))
         )
         try:
             mail.send(client_msg)
         except Exception:
-            # Nechceme blokovat úspěch jen kvůli potvrzení klientovi – zalogujeme, ale vrátíme ok.
             current_app.logger.exception("Client confirmation email failed")
 
     return jsonify({"ok": True, "message": "Děkujeme za zprávu, ozveme se co nejdříve."})
@@ -212,3 +212,48 @@ def test_mail():
     except Exception as e:
         current_app.logger.exception("Test mail failed")
         return {"ok": False, "error": str(e)}, 500
+    
+# --- přímý SMTP test (neblokuje nic jiného) ---
+import os, smtplib
+from email.message import EmailMessage
+
+@api_bp.get("/smtp-test")
+def smtp_test():
+    try:
+        server = os.getenv("MAIL_SERVER")
+        port = int(os.getenv("MAIL_PORT", "587"))
+        use_tls = os.getenv("MAIL_USE_TLS", "True").lower() == "true"
+        use_ssl = os.getenv("MAIL_USE_SSL", "False").lower() == "true"
+        username = os.getenv("MAIL_USERNAME")
+        password = os.getenv("MAIL_PASSWORD")
+        sender = os.getenv("MAIL_DEFAULT_SENDER") or username
+        recipient = os.getenv("MAIL_TO") or username
+
+        if not (server and sender and recipient):
+            return {"ok": False, "error": "Chybí MAIL_SERVER/MAIL_DEFAULT_SENDER/MAIL_TO"}, 500
+
+        msg = EmailMessage()
+        msg["Subject"] = "SMTP test PVM-Deal"
+        msg["From"] = sender
+        msg["To"] = recipient
+        msg.set_content("Test OK – přímý SMTP bez Flask-Mail.")
+
+        if use_ssl:
+            with smtplib.SMTP_SSL(server, port, timeout=10) as s:
+                if username and password:
+                    s.login(username, password)
+                s.send_message(msg)
+        else:
+            with smtplib.SMTP(server, port, timeout=10) as s:
+                s.ehlo()
+                if use_tls:
+                    s.starttls(); s.ehlo()
+                if username and password:
+                    s.login(username, password)
+                s.send_message(msg)
+
+        return {"ok": True, "message": "SMTP test odeslán."}
+    except Exception as e:
+        current_app.logger.exception("SMTP test failed")
+        return {"ok": False, "error": str(e)}, 500
+

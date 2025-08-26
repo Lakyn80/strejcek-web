@@ -7,25 +7,25 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config())
 
+    # init extensions
     mail.init_app(app)
-
-    # ✅ Robustní CORS: povolí jakýkoli origin (dočasně), metody a hlavičky pro preflight
     cors.init_app(
         app,
-        resources={r"/api/*": {"origins": "*"}},
+        resources={r"/api/*": {"origins": Config.ALLOWED_ORIGINS}},
         supports_credentials=False,
         methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Content-Type", "X-Recaptcha-Token", "Authorization"],
         expose_headers=["Content-Type"],
         vary_header=True,
-        always_send=True,       # pošli CORS i na 4xx/5xx
-        send_wildcard=True      # Access-Control-Allow-Origin: *
+        always_send=True,
     )
 
+    # blueprints
     app.register_blueprint(api_bp)
 
+    # jednoduchý root
     @app.get("/")
     def index():
-        return {"ok": True, "service": "Palety • Big-Bagy • Krabice Strejček API"}
+        return {"ok": True, "service": "PVM-Deal API"}
 
     return app
