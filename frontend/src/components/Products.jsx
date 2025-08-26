@@ -7,7 +7,7 @@ const cards = [
 export default function Products() {
   return (
     <section id="produkty" className="py-12">
-      <h2 className="text-2xl font-bold mb-6">Co prodáváme</h2>
+      <h2 className="text-2xl font-bold mb-6">Co prodáváme a vykupujeme</h2>
       <div className="grid md:grid-cols-3 gap-6">
         {cards.map(c => (
           <div key={c.title} className="border rounded-lg p-5 bg-white shadow-sm">

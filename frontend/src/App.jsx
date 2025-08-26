@@ -3,6 +3,7 @@ import Hero from "./components/Hero.jsx";
 import Products from "./components/Products.jsx";
 import Pricing from "./components/Pricing.jsx";
 import Gallery from "./components/Gallery.jsx";
+import Liquidation from "./components/Liquidation";
 import Location from "./components/Location.jsx";
 import ContactForm from "./components/ContactForm.jsx";
 import Footer from "./components/Footer.jsx";
@@ -16,6 +17,7 @@ export default function App() {
         <Products />
         <Pricing />
         <Gallery />
+        <Liquidation />
         <Location />
         <ContactForm />
       </main>

@@ -2,12 +2,78 @@
 <html lang="cs">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Palety • Big-Bagy • Krabice Strejček</title>
-    <meta name="description" content="Výkup a prodej opotřebených palet, big-bagů a krabic – Polešovice u Uherského Hradiště." />
-    <link rel="icon" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <!-- === ZÁKLADNÍ SEO === -->
+    <title>PVM-Deal.cz – Pomocný výrobní materiál | Palety • Big-Bagy • Krabice • Likvidace</title>
+    <meta name="description" content="PVM-Deal.cz – Pomocný výrobní materiál. Výkup a prodej palet, big-bagů, krabic a likvidace materiálu. Polešovice 483, 687 37. Doprava po celé ČR i Slovensku. WhatsApp: +420 777 863 255." />
+    <meta name="keywords" content="PVM-Deal.cz, likvidace materiálu, výkup palet, big bagy, krabice, pomocný výrobní materiál, výkup zásob, likvidace firem, Polešovice, Uherské Hradiště, doprava ČR Slovensko" />
+    <meta name="author" content="PVM-Deal.cz – Pomocný výrobní materiál" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://pvm-deal.cz/" />
+
+    <!-- === FAVICONY (sjednocené) === -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="shortcut icon" href="/favicon.png" />
+    <meta name="theme-color" content="#111827" />
+
+    <!-- === OPEN GRAPH === -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PVM-Deal.cz" />
+    <meta property="og:title" content="PVM-Deal.cz – Palety • Big-Bagy • Krabice • Likvidace" />
+    <meta property="og:description" content="Výkup a prodej palet, big-bagů, krabic a likvidace materiálu. Doprava po celé ČR i Slovensku. WhatsApp: +420 777 863 255." />
+    <meta property="og:image" content="https://pvm-deal.cz/og-cover.jpg" />
+    <meta property="og:image:alt" content="PVM-Deal.cz – palety, big-bagy, krabice a likvidace materiálu" />
+    <meta property="og:url" content="https://pvm-deal.cz/" />
+    <meta property="og:locale" content="cs_CZ" />
+
+    <!-- === TWITTER CARD === -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PVM-Deal.cz – Palety • Big-Bagy • Krabice • Likvidace" />
+    <meta name="twitter:description" content="Výkup a prodej palet, big-bagů, krabic a likvidace materiálu. Doprava po celé ČR i Slovensku. WhatsApp: +420 777 863 255." />
+    <meta name="twitter:image" content="https://pvm-deal.cz/og-cover.jpg" />
+
+    <!-- === JSON-LD – LocalBusiness === -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "PVM-Deal.cz",
+      "alternateName": "Pomocný výrobní materiál – PVM-Deal.cz",
+      "image": "https://pvm-deal.cz/og-cover.jpg",
+      "url": "https://pvm-deal.cz/",
+      "telephone": "+420777863255",
+      "email": "robin.strejcek@centrum.cz",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Polešovice 483",
+        "postalCode": "687 37",
+        "addressLocality": "Polešovice",
+        "addressCountry": "CZ"
+      },
+      "areaServed": [
+        { "@type": "Country", "name": "Czech Republic" },
+        { "@type": "Country", "name": "Slovakia" }
+      ],
+      "priceRange": "Kč – KčKč",
+      "openingHoursSpecification": [{
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+        "opens": "08:00",
+        "closes": "17:00"
+      }],
+      "sameAs": [
+        "https://wa.me/420777863255"
+      ],
+      "description": "Výkup a prodej palet, big-bagů, krabic a likvidace materiálu. Doprava po celé ČR i Slovensku."
+    }
+    </script>
   </head>
-  <body class="bg-gray-50 text-gray-800">
+
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

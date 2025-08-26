@@ -1,12 +1,12 @@
 import React from "react";
 
 const imgs = [
-  "/images/palety_1.jpg",
-  "/images/palety_2.jpg",
-  "/images/palety_3.jpg",
-  "/images/palety_4.jpg",
-  "/images/palety_5.jpg",
-  "/images/palety_6.jpg"
+  "/images/palety_1.webp",
+  "/images/palety_2.webp",
+  "/images/palety_3.webp",
+  "/images/palety_4.webp",
+  "/images/palety_5.webp",
+  "/images/palety_6.webp",
 ];
 
 export default function Gallery() {

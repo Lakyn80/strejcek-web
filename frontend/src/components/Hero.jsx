@@ -43,7 +43,7 @@ export default function Hero() {
           </h1>
 
           <p className="mt-4 text-base md:text-lg text-gray-300 max-w-2xl">
-            Výkup a prodej opotřebených palet, big-bagů a krabic v okolí Polešovic u Uherského Hradiště.
+            Výkup a prodej použitých palet, big-bagů a krabic v okolí Polešovic u Uherského Hradiště.
             Přijeďte si osobně, nebo po dohodě zajistíme dopravu – při větším odběru rozvážíme po celé ČR i Slovensku.
           </p>
 
@@ -70,12 +70,12 @@ export default function Hero() {
         {/* obrázková mozaika — stejné cesty, jen hezčí rámeček/hover */}
         <div className="flex-1 grid grid-cols-3 gap-2 opacity-95">
           {[
-            { src: "/images/bag_2.jpg", alt: "Big-bag" },
-            { src: "/images/palety_drev_1.jpg", alt: "Palety" },
-            { src: "/images/krab_3.jpg", alt: "Krabice" },
-            { src: "/images/hranol_drev_1.jpg", alt: "Dřevěný hranol" },
-            { src: "/images/palety_5.jpg", alt: "Palety" },
-            { src: "/images/palety_6.jpg", alt: "Palety" },
+            { src: "/images/bagy_2.webp", alt: "Big-bag" },
+            { src: "/images/palety_drev_1.webp", alt: "Palety" },
+            { src: "/images/krab_3.webp", alt: "Krabice" },
+            { src: "/images/hranol_drev_1.webp", alt: "Dřevěný hranol" },
+            { src: "/images/palety_5.webp", alt: "Palety" },
+            { src: "/images/palety_6.webp", alt: "Palety" },
           ].map((img, i) => (
             <div
               key={i}
