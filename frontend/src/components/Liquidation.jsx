@@ -9,13 +9,17 @@ export default function Liquidation() {
     >
       <div className="max-w-5xl mx-auto px-6 text-center">
         <h2 className="text-4xl md:text-5xl font-extrabold mb-6 text-gray-900">
-          🏭 Likvidace zásob & materiálu
+          🏭 Likvidace zásob &amp; materiálu
         </h2>
-        <p className="text-lg md:text-xl text-gray-600 mb-12 leading-relaxed max-w-3xl mx-auto">
-          Pomůžeme vám <strong>rychle a výhodně</strong> s odkupem materiálu,
-          který zůstává po výrobě nebo při likvidaci firmy.  
-          Vykupujeme <span className="font-semibold">palety, big-bagy, krabice, dřevo i další</span>{" "}
-          – prostě cokoliv, co má férovou cenu.
+
+        {/* Upravený text dle zadání */}
+        <p className="text-lg md:text-xl text-gray-700 mb-6 leading-relaxed max-w-3xl mx-auto">
+          Pomůžeme vám <strong>rychle a výhodně</strong> s{" "}
+          <strong>odkupem materiálu</strong>, který zůstává po výrobě, nebo při
+          likvidaci firmy. Vykupujeme{" "}
+          <strong>nejenom palety, big-bagy, krabice, dřevo</strong> i{" "}
+          <strong>další</strong> – prostě cokoliv, co má hodnotu,{" "}
+          <strong>vykoupíme za férovou cenu</strong> a <strong>odvezeme</strong>.
         </p>
 
         <div className="grid md:grid-cols-2 gap-6 mb-12 max-w-3xl mx-auto">
@@ -36,7 +40,7 @@ export default function Liquidation() {
         </div>
 
         <p className="text-lg md:text-xl font-semibold text-gray-800 mb-10">
-          ➡️ Stačí poslat seznam nebo fotografie zásob – ozveme se obratem.
+          ➡️ Pošlete nám seznam nebo fotografie zásob – ozveme se obratem.
         </p>
 
         <a

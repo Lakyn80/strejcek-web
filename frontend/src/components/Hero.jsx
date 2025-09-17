@@ -32,7 +32,7 @@ export default function Hero() {
 
       <div className="relative max-w-6xl mx-auto px-4 py-16 flex flex-col md:flex-row items-start md:items-center gap-8">
         <div className="flex-1">
-          {/* NADPIS — zachován tvůj text, jen přidán gradient a typografie */}
+          {/* NADPIS */}
           <h1 className="text-3xl md:text-5xl font-extrabold leading-tight tracking-tight">
             <span className="bg-gradient-to-r from-emerald-400 via-lime-300 to-sky-400 bg-clip-text text-transparent drop-shadow-sm">
               Palety • Big-Bagy • Krabice
@@ -42,32 +42,48 @@ export default function Hero() {
             </span>
           </h1>
 
-          <p className="mt-4 text-base md:text-lg text-gray-300 max-w-2xl">
-            Výkup a prodej použitých palet, big-bagů a krabic v okolí Polešovic u Uherského Hradiště.
-            Přijeďte si osobně, nebo po dohodě zajistíme dopravu – při větším odběru rozvážíme po celé ČR i Slovensku.
+          {/* DŮRAZ NA PVM — moderní, bez teček */}
+          <p className="mt-3 inline-flex items-center gap-3 text-sm md:text-base font-semibold text-emerald-300 bg-white/5 px-4 py-2 rounded-lg shadow-sm tracking-wide">
+            <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-extrabold text-lg">P&nbsp;V&nbsp;M</span>
+            <span className="text-gray-200">= Pomocný výrobní materiál</span>
           </p>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <a
-              href="#kontakt"
-              className="group relative inline-flex items-center gap-2 rounded-md bg-white px-5 py-3 font-semibold text-gray-900 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white/40"
-            >
-              <span>Poptat</span>
-              <span className="inline-block transition-transform group-hover:translate-x-0.5">→</span>
+          {/* ÚVODNÍ TEXT */}
+          <p className="mt-4 text-base md:text-lg text-gray-300 max-w-2xl">
+            Výkupujeme a prodáváme použité palety, big-bagy a krabice. Sídlíme v{" "}
+            <strong>Polešovicích u Uherského Hradiště</strong>. Přijeďte si
+            osobně, nebo po dohodě zajistíme dopravu –{" "}
+            <strong>při větším odběru rozvážíme po celé ČR i Slovensku.</strong>
+          </p>
+
+          {/* Odkazy místo navbaru – jen smooth scroll na sekce */}
+          <nav className="mt-6 flex flex-wrap gap-2">
+            <a href="#produkty" className="px-4 py-2 rounded bg-white/10 text-white hover:bg-white/20 transition">
+              Nabídka
             </a>
-            <a
-              href={wa}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2 rounded-md bg-emerald-500 px-5 py-3 font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-            >
-              <span className="inline-block h-2 w-2 rounded-full bg-white animate-pulse" />
-              <span>Napsat na WhatsApp</span>
+            <a href="#cenik" className="px-4 py-2 rounded bg-white/10 text-white hover:bg-white/20 transition">
+              Ceník
             </a>
-          </div>
+            <a href="#galerie" className="px-4 py-2 rounded bg-white/10 text-white hover:bg-white/20 transition">
+              Galerie
+            </a>
+            <a href="#likvidace" className="px-4 py-2 rounded bg-white/10 text-white hover:bg-white/20 transition">
+              Likvidace
+            </a>
+            <a href="#kontakt" className="px-4 py-2 rounded bg-white/10 text-white hover:bg-white/20 transition">
+              Kontakt
+            </a>
+          </nav>
+
+
+          {/* volitelně můžeš nechat i WhatsApp CTA — nechávám zapojené proměnné, ale nevkládám tlačítko, jak sis přál */}
+          {/* <a href={wa} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block underline">
+            WhatsApp
+          </a> */}
         </div>
 
-        {/* obrázková mozaika — stejné cesty, jen hezčí rámeček/hover */}
+        {/* Obrázková mřížka vpravo – nechávám beze změny logiky (jen si drž své src podle toho, co máš v /public/images) */}
         <div className="flex-1 grid grid-cols-3 gap-2 opacity-95">
           {[
             { src: "/images/bagy_2.webp", alt: "Big-bag" },
@@ -87,7 +103,6 @@ export default function Hero() {
                 loading="eager"
                 className="h-28 w-full object-cover transition duration-300 hover:scale-[1.03]"
               />
-              {/* jemný lesk při hoveru */}
               <div
                 className="pointer-events-none absolute inset-0 opacity-0 transition-opacity hover:opacity-100"
                 style={{
