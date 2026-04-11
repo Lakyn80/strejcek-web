@@ -1,26 +1,56 @@
-# === Deploy frontend na server ===
+# =====================================================
+# deploy.ps1 – build → push Docker Hub → restart VPS
+# Spuštění: .\deploy.ps1
+# =====================================================
 
-# Nastavení
-$PROJECT    = "C:\Users\lukas\Desktop\PYTHON_PROJECTS_DESKTOP\PYTHON_POJECTS\strejcek-web\frontend"
-$REMOTE     = "lucky@89.221.214.140"
-$REMOTE_DIR = "/home/lucky/projects/strejcek-web"
+$ErrorActionPreference = "Stop"
 
-# 1) Build frontend
-Write-Host "=== Spouštím build (npm run build) ==="
-cd $PROJECT
-npm run build
+$DOCKER_USER  = "lakyn80"
+$BACKEND_IMG  = "$DOCKER_USER/pvm-deal-backend:latest"
+$FRONTEND_IMG = "$DOCKER_USER/pvm-deal-frontend:latest"
+$REMOTE       = "lucky@89.221.214.140"
+$REMOTE_DIR   = "/home/lucky/projects/apps/pvm-deal"
 
-if (-not (Test-Path "$PROJECT\dist")) {
-    Write-Error "❌ Build selhal – složka dist neexistuje!"
+$ROOT = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+Write-Host "`n=== 1/6  Docker login ==="
+docker login
+
+Write-Host "`n=== 2/6  Build backend ==="
+docker build -t $BACKEND_IMG "$ROOT\backend"
+
+Write-Host "`n=== 3/6  Build frontend ==="
+docker build -t $FRONTEND_IMG "$ROOT\frontend"
+
+Write-Host "`n=== 4/6  Push na Docker Hub ==="
+docker push $BACKEND_IMG
+docker push $FRONTEND_IMG
+
+Write-Host "`n=== 5/6  Nahrání konfigurace na VPS ==="
+scp "$ROOT\docker-compose.yml"       "${REMOTE}:${REMOTE_DIR}/docker-compose.yml"
+scp "$ROOT\pvm-deal.nginx.conf"      "${REMOTE}:/tmp/pvm-deal.nginx.conf"
+
+Write-Host "`n=== 6/6  Deploy na VPS ==="
+ssh $REMOTE @"
+  set -e
+  cd $REMOTE_DIR
+
+  if [ ! -f .env ]; then
+    echo '❌ Chybí .env na serveru! Viz .env.example – zkopíruj a vyplň.'
     exit 1
-}
+  fi
 
-# 2) Upload dist/ na server (přepíše starý obsah)
-Write-Host "=== Nahrávám dist/ na server ==="
-scp -r "$PROJECT/dist" "$REMOTE:$REMOTE_DIR/"
+  # Nasaď nginx config
+  sudo cp /tmp/pvm-deal.nginx.conf /etc/nginx/sites-available/pvm-deal.cz
+  sudo ln -sf /etc/nginx/sites-available/pvm-deal.cz /etc/nginx/sites-enabled/pvm-deal.cz
+  sudo nginx -t && sudo systemctl reload nginx
 
-# 3) Oprava práv na serveru
-Write-Host "=== Spouštím fix-dist.sh na serveru ==="
-ssh $REMOTE "~/fix-dist.sh"
+  # Spusť Docker kontejnery
+  docker compose pull
+  docker compose up -d --remove-orphans
+  docker image prune -f
 
-Write-Host "`n✅ Hotovo: nasazeno na https://pvm-deal.cz"
+  echo '✅ Nasazeno!'
+"@
+
+Write-Host "`n✅ Hotovo – http://pvm-deal.cz"

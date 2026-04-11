@@ -1,0 +1,23 @@
+services:
+  backend:
+    image: lakyn80/pvm-deal-backend:latest
+    restart: always
+    env_file: .env
+    expose:
+      - "5000"
+    networks:
+      - pvm
+
+  frontend:
+    image: lakyn80/pvm-deal-frontend:latest
+    restart: always
+    ports:
+      - "127.0.0.1:8095:80"
+    depends_on:
+      - backend
+    networks:
+      - pvm
+
+networks:
+  pvm:
+    driver: bridge
