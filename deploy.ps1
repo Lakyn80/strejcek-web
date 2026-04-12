@@ -1,6 +1,9 @@
 # =====================================================
+
 # deploy.ps1 – build → push Docker Hub → restart VPS
+
 # Spuštění: .\deploy.ps1
+
 # =====================================================
 
 $ErrorActionPreference = "Stop"
@@ -27,30 +30,34 @@ docker push $BACKEND_IMG
 docker push $FRONTEND_IMG
 
 Write-Host "`n=== 5/6  Nahrání konfigurace na VPS ==="
-scp "$ROOT\docker-compose.yml"       "${REMOTE}:${REMOTE_DIR}/docker-compose.yml"
-scp "$ROOT\pvm-deal.nginx.conf"      "${REMOTE}:/tmp/pvm-deal.nginx.conf"
+scp "$ROOT\docker-compose.yml"  "${REMOTE}:${REMOTE_DIR}/docker-compose.yml"
+scp "$ROOT\pvm-deal.nginx.conf" "${REMOTE}:/tmp/pvm-deal.nginx.conf"
 
 Write-Host "`n=== 6/6  Deploy na VPS ==="
 ssh $REMOTE @"
-  set -e
-  cd $REMOTE_DIR
+set -e
+cd $REMOTE_DIR
 
-  if [ ! -f .env ]; then
-    echo '❌ Chybí .env na serveru! Viz .env.example – zkopíruj a vyplň.'
-    exit 1
-  fi
+# ✅ SPRÁVNÁ kontrola ENV
 
-  # Nasaď nginx config
-  sudo cp /tmp/pvm-deal.nginx.conf /etc/nginx/sites-available/pvm-deal.cz
-  sudo ln -sf /etc/nginx/sites-available/pvm-deal.cz /etc/nginx/sites-enabled/pvm-deal.cz
-  sudo nginx -t && sudo systemctl reload nginx
+if [ ! -f backend/.env ]; then
+echo '❌ Chybí backend/.env na serveru!'
+exit 1
+fi
 
-  # Spusť Docker kontejnery
-  docker compose pull
-  docker compose up -d --remove-orphans
-  docker image prune -f
+# Nginx config
 
-  echo '✅ Nasazeno!'
+sudo cp /tmp/pvm-deal.nginx.conf /etc/nginx/sites-available/pvm-deal.cz
+sudo ln -sf /etc/nginx/sites-available/pvm-deal.cz /etc/nginx/sites-enabled/pvm-deal.cz
+sudo nginx -t && sudo systemctl reload nginx
+
+# Docker deploy
+
+docker compose pull
+docker compose up -d --remove-orphans
+docker image prune -f
+
+echo '✅ Nasazeno!'
 "@
 
 Write-Host "`n✅ Hotovo – http://pvm-deal.cz"

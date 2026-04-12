@@ -1,10 +1,13 @@
+version: "3.9"
+
 services:
   backend:
     image: lakyn80/pvm-deal-backend:latest
     restart: always
-    env_file: .env
-    expose:
-      - "5000"
+    env_file:
+      - ./backend/.env
+    ports:
+      - "127.0.0.1:8070:5000"
     networks:
       - pvm
 

@@ -18,9 +18,9 @@ const Navbar = () => {
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
         <a href="#" className="flex items-center">
           <img
-            src="/PVM Deal lgo.png"
+            src="/PVM%20Deal%20lgo.png"
             alt="PVM-Deal logo"
-            className="h-16 w-auto object-contain"
+            className="h-20 w-auto object-contain"
           />
         </a>
 
