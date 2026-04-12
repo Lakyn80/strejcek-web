@@ -82,10 +82,11 @@ sudo ln -sf /etc/nginx/sites-available/pvm-deal.cz /etc/nginx/sites-enabled/pvm-
 sudo nginx -t && sudo systemctl reload nginx
 
 docker compose pull
-docker compose up -d --remove-orphans
+docker compose up -d --remove-orphans --force-recreate
 docker image prune -f
 
 echo 'Nasazeno: $TAG'
+docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
 "@
 
 Write-Host "`n Hotovo – https://pvm-deal.cz (tag: $TAG)"
