@@ -1,0 +1,10 @@
+accounting-api[production] @ git+https://github.com/Lakyn80/cz-accounting-module.git@v0.1.0#subdirectory=packages/accounting-api
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+pydantic-settings>=2.0,<3
+python-dotenv>=1.0,<2
+SQLAlchemy>=2.0.36,<3
+alembic>=1.14.0,<2
+python-multipart>=0.0.9
+pytest>=8.0,<9
+httpx>=0.27,<1
