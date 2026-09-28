@@ -5,8 +5,9 @@ from __future__ import annotations
 from collections.abc import Generator
 from pathlib import Path
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,7 @@ from accounting_api.database import (
     upgrade_database,
 )
 from accounting_api.fastapi import create_accounting_router
+from accounting_api.ports.settings import CompanySettingsUnavailableError
 
 from app.auth import (
     ACCOUNTING_UI_AUTH_HEADER,
@@ -31,6 +33,28 @@ from app.auth import (
     require_admin_from_request,
 )
 from app.config import Settings, get_settings
+
+EMPTY_INVOICE_SETTINGS_RESPONSE = {
+    "owner_email": "",
+    "issuer_name": "",
+    "issuer_address": "",
+    "issuer_city": "",
+    "issuer_zip": "",
+    "issuer_ico": "",
+    "issuer_dic": "",
+    "issuer_data_box": None,
+    "issuer_email": None,
+    "issuer_phone": None,
+    "default_currency": "CZK",
+    "default_due_days": 14,
+    "default_note": None,
+    "payment_method": "Převodem",
+    "bank_account_number": "",
+    "bank_account_prefix": None,
+    "bank_code": "",
+    "bank_iban": "",
+    "account_label": "",
+}
 
 
 def create_app(settings: Settings | None = None, *, run_migrations: bool = True) -> FastAPI:
@@ -79,6 +103,16 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
             return await call_next(request)
         finally:
             pop_request_context(token)
+
+    @app.exception_handler(CompanySettingsUnavailableError)
+    async def company_settings_unavailable_handler(
+        request: Request,
+        exc: CompanySettingsUnavailableError,
+    ) -> JSONResponse:
+        # Fresh DB: Settings UI must load empty form instead of opaque 500.
+        if request.method == "GET" and request.url.path.rstrip("/").endswith("/settings"):
+            return JSONResponse(status_code=200, content=EMPTY_INVOICE_SETTINGS_RESPONSE)
+        return JSONResponse(status_code=400, content={"detail": str(exc)})
 
     @app.get("/health")
     def health() -> dict[str, object]:
@@ -141,10 +175,13 @@ def _configure_integrations(settings: Settings) -> None:
 
     if settings.accounting_ares_provider == "mock":
         configure_ares_provider(MockAresProvider())
+    elif settings.accounting_ares_provider == "real":
+        from app.ares_real import RealAresProvider
+
+        configure_ares_provider(RealAresProvider())
 
 
 def _ensure_sqlite_parent(database_url: str) -> None:
     url = make_url(database_url)
     if url.drivername.startswith("sqlite") and url.database and url.database != ":memory:":
         Path(url.database).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
-

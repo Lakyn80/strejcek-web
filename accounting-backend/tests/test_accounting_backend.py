@@ -74,3 +74,25 @@ def test_login_and_authenticated_accounting_access(tmp_path: Path) -> None:
     logout = client.post("/api/admin/logout", headers={"Authorization": f"Bearer {token}"})
     assert logout.status_code == 200
     assert logout.json() == {"ok": True}
+
+
+def test_settings_get_returns_empty_defaults_when_unconfigured(tmp_path: Path) -> None:
+    app = create_app(build_settings(tmp_path))
+    client = TestClient(app)
+
+    login = client.post(
+        "/api/admin/login",
+        json={"username": "admin", "password": "correct-password"},
+    )
+    token = login.json()["access_token"]
+
+    response = client.get(
+        "/api/accounting/settings",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["issuer_ico"] == ""
+    assert payload["default_currency"] == "CZK"
+    assert payload["payment_method"] == "Převodem"
