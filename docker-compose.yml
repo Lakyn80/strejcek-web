@@ -1,26 +1,113 @@
-version: "3.9"
-
 services:
   backend:
-    image: lakyn80/pvm-deal-backend:latest
-    restart: always
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
     env_file:
-      - ./backend/.env
+      - ./backend/.env.docker.example
     ports:
-      - "127.0.0.1:8070:5000"
+      - "${FLASK_HOST_BIND:-127.0.0.1}:${FLASK_HOST_PORT:-8070}:5000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/api/health', timeout=5).read()",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - pvm
+
+  accounting-backend:
+    build:
+      context: ./accounting-backend
+      dockerfile: Dockerfile
+      additional_contexts:
+        cz-accounting-module: ${CZ_ACCOUNTING_MODULE_CONTEXT:-./admin/.accounting-ui/cz-accounting-module}
+    restart: unless-stopped
+    env_file:
+      - ./accounting-backend/.env.example
+    environment:
+      APP_ENV: "${APP_ENV:-production}"
+      ACCOUNTING_API_PREFIX: "/api/accounting"
+      ACCOUNTING_DATABASE_URL: "sqlite:////data/accounting.db"
+      ACCOUNTING_STORAGE_PATH: "/data/accounting-storage"
+      ADMIN_USERNAME: "${ADMIN_USERNAME:?Set ADMIN_USERNAME in your local .env or shell}"
+      ADMIN_PASSWORD_HASH: "${ADMIN_PASSWORD_HASH:?Set ADMIN_PASSWORD_HASH in your local .env or shell}"
+      ADMIN_DISPLAY_NAME: "${ADMIN_DISPLAY_NAME:-Accounting Admin}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-}"
+      SECRET_KEY: "${SECRET_KEY:?Set SECRET_KEY in your local .env or shell}"
+      ADMIN_ALLOWED_ORIGINS: "${ADMIN_ALLOWED_ORIGINS:-http://127.0.0.1:8096}"
+      ACCOUNTING_EMAIL_PROVIDER: "${ACCOUNTING_EMAIL_PROVIDER:-console}"
+      ACCOUNTING_EMAIL_FROM: "${ACCOUNTING_EMAIL_FROM:-accounting@example.invalid}"
+      ACCOUNTING_ARES_PROVIDER: "${ACCOUNTING_ARES_PROVIDER:-mock}"
+    volumes:
+      - accounting_data:/data
+    ports:
+      - "${ACCOUNTING_HOST_BIND:-127.0.0.1}:${ACCOUNTING_HOST_PORT:-8071}:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - pvm
 
   frontend:
-    image: lakyn80/pvm-deal-frontend:latest
-    restart: always
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
-      - "127.0.0.1:8095:80"
+      - "${FRONTEND_HOST_BIND:-127.0.0.1}:${FRONTEND_HOST_PORT:-8095}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - pvm
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      additional_contexts:
+        cz-accounting-module: ${CZ_ACCOUNTING_MODULE_CONTEXT:-./admin/.accounting-ui/cz-accounting-module}
+    restart: unless-stopped
+    ports:
+      - "${ADMIN_HOST_BIND:-127.0.0.1}:${ADMIN_HOST_PORT:-8096}:80"
+    depends_on:
+      accounting-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/accounting/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     networks:
       - pvm
 
 networks:
   pvm:
     driver: bridge
+
+volumes:
+  accounting_data:
