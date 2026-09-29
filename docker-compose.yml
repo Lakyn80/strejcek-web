@@ -45,6 +45,9 @@ services:
       ADMIN_ALLOWED_ORIGINS: "${ADMIN_ALLOWED_ORIGINS:-http://127.0.0.1:8096}"
       ACCOUNTING_EMAIL_PROVIDER: "${ACCOUNTING_EMAIL_PROVIDER:-console}"
       ACCOUNTING_EMAIL_FROM: "${ACCOUNTING_EMAIL_FROM:-accounting@example.invalid}"
+      RESEND_API_KEY: "${RESEND_API_KEY:-}"
+      RESEND_FROM_EMAIL: "${RESEND_FROM_EMAIL:-faktury@pvm-deal.cz}"
+      RESEND_FROM_NAME: "${RESEND_FROM_NAME:-PVM Deal}"
       ACCOUNTING_ARES_PROVIDER: "${ACCOUNTING_ARES_PROVIDER:-real}"
     volumes:
       - accounting_data:/data

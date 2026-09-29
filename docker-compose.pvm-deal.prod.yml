@@ -20,7 +20,7 @@ services:
       - pvm
 
   accounting-backend:
-    image: lakyn80/pvm-deal-accounting-backend:20260928-234313
+    image: lakyn80/pvm-deal-accounting-backend:20260929-014900
     restart: unless-stopped
     env_file:
       - ./.env
@@ -29,8 +29,11 @@ services:
       ACCOUNTING_API_PREFIX: "/api/accounting"
       ACCOUNTING_DATABASE_URL: "sqlite:////data/accounting.db"
       ACCOUNTING_STORAGE_PATH: "/data/accounting-storage"
-      ACCOUNTING_EMAIL_PROVIDER: "console"
-      ACCOUNTING_EMAIL_FROM: "accounting@pvm-deal.cz"
+      ACCOUNTING_EMAIL_PROVIDER: "resend"
+      ACCOUNTING_EMAIL_FROM: "faktury@pvm-deal.cz"
+      RESEND_FROM_EMAIL: "faktury@pvm-deal.cz"
+      RESEND_FROM_NAME: "PVM Deal"
+      ACCOUNTING_INVOICE_COPY_EMAIL: "robin.strejcek@centrum.cz"
       ACCOUNTING_ARES_PROVIDER: "real"
       ADMIN_ALLOWED_ORIGINS: "https://admin.pvm-deal.cz,http://127.0.0.1:8096"
     volumes:
@@ -53,7 +56,7 @@ services:
       - pvm
 
   admin:
-    image: lakyn80/pvm-deal-admin:20260928-234313
+    image: lakyn80/pvm-deal-admin:20260929-014900
     restart: unless-stopped
     ports:
       - "127.0.0.1:8096:80"
