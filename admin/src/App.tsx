@@ -222,9 +222,16 @@ export function App() {
         <div className="min-h-screen bg-background text-foreground">
           <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
             <div className="mx-auto flex min-h-14 max-w-7xl items-center justify-between gap-4 px-4">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">PVM-Deal Accounting</p>
-                <p className="truncate text-xs text-muted-foreground">{principal.display_name}</p>
+              <div className="flex min-w-0 items-center gap-3">
+                <img
+                  src={`${import.meta.env.BASE_URL}pvm-deal-logo.png`}
+                  alt="PVM-Deal"
+                  className="h-9 w-auto object-contain"
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">PVM-Deal Accounting</p>
+                  <p className="truncate text-xs text-muted-foreground">{principal.display_name}</p>
+                </div>
               </div>
               <button
                 type="button"
