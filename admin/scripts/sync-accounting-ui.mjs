@@ -9,8 +9,8 @@ const cacheRoot = resolve(adminRoot, ".accounting-ui");
 const repoDir = resolve(cacheRoot, "cz-accounting-module");
 const packageDir = resolve(repoDir, "packages", "accounting-ui");
 const repository = "https://github.com/Lakyn80/cz-accounting-module.git";
-const tag = "v0.1.0";
-const expectedCommit = "dddfe59ad4a0f08f6f8cb0f2217d8e0342f527f6";
+const tag = "v0.1.1";
+const expectedCommit = "c6c52c1b618339abe103ee80330eaadc005df5e7";
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
