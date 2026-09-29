@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git \
+    && apt-get install -y --no-install-recommends git fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=cz-accounting-module /packages/accounting-api /tmp/accounting-api
@@ -18,6 +18,7 @@ RUN sed "/^accounting-api/d" requirements.txt > requirements-docker.txt \
     && pip install --no-cache-dir -r requirements-docker.txt
 
 COPY app ./app
+COPY assets ./assets
 
 EXPOSE 8000
 
