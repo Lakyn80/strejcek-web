@@ -23,7 +23,7 @@ from accounting_api.services.export_dto import build_invoice_export
 
 SETTINGS_PAYLOAD = {
     "owner_email": "owner@example.test",
-    "issuer_name": "Robin Strejček – Pólšovice",
+    "issuer_name": "Robin Strejček",
     "issuer_address": "Polešovice 483",
     "issuer_city": "Polešovice",
     "issuer_zip": "68737",
@@ -35,11 +35,12 @@ SETTINGS_PAYLOAD = {
     "default_currency": "CZK",
     "default_due_days": 14,
     "default_note": "Děkujeme za spolupráci.",
+    "vat_enabled": False,
     "payment_method": "Převodem",
-    "bank_account_number": "0000000000",
+    "bank_account_number": "6697218399",
     "bank_account_prefix": None,
-    "bank_code": "0100",
-    "bank_iban": "",
+    "bank_code": "0800",
+    "bank_iban": "CZ0908000000006697218399",
 }
 
 
@@ -53,8 +54,9 @@ def build_settings(tmp_path: Path, **overrides: object) -> Settings:
         accounting_email_provider="console",
         accounting_ares_provider="mock",
         accounting_logo_path=logo if logo.is_file() else tmp_path / "missing-logo.png",
-        accounting_issuer_bic="KOMBCZPPXXX",
+        accounting_issuer_bic="GIBACZPX",
         accounting_issuer_website="https://pvm-deal.cz",
+        accounting_issuer_phone_fallback="+420777863255",
         admin_username="admin",
         admin_password_hash=hash_password("correct-password", salt="testsalt", iterations=1_000),
         admin_display_name="Test Admin",
@@ -75,11 +77,12 @@ def auth_client(tmp_path: Path) -> tuple[TestClient, str, Settings]:
     return client, login.json()["access_token"], settings
 
 
-def seed_settings(client: TestClient, token: str) -> None:
+def seed_settings(client: TestClient, token: str, **overrides: object) -> None:
+    payload = {**SETTINGS_PAYLOAD, **overrides}
     response = client.put(
         "/api/accounting/settings",
         headers={"Authorization": f"Bearer {token}"},
-        json=SETTINGS_PAYLOAD,
+        json=payload,
     )
     assert response.status_code == 200, response.text
 
@@ -130,7 +133,7 @@ def create_invoice(client: TestClient, token: str, subject_id: int) -> dict:
 
 def test_create_invoice_numbering_and_totals(tmp_path: Path) -> None:
     client, token, _ = auth_client(tmp_path)
-    seed_settings(client, token)
+    seed_settings(client, token, vat_enabled=True)
     subject_id = create_subject(client, token)
     first = create_invoice(client, token, subject_id)
     second = create_invoice(client, token, subject_id)
@@ -224,8 +227,8 @@ def test_spayd_payload_is_dynamic(tmp_path: Path) -> None:
     generator = ReportLabInvoicePdfGenerator(
         branding=InvoicePdfBranding(
             issuer_email="accounting@example.test",
-            issuer_phone="+420 000 000 000",
-            issuer_bic="KOMBCZPPXXX",
+            issuer_phone="+420777863255",
+            issuer_bic="GIBACZPX",
             issuer_website="https://pvm-deal.cz",
             logo_path=settings.accounting_logo_path if settings.accounting_logo_path.is_file() else None,
         ),
@@ -248,8 +251,12 @@ def test_spayd_payload_is_dynamic(tmp_path: Path) -> None:
         engine.dispose()
 
     assert payload.startswith("SPD*1.0*")
+    assert "ACC:CZ0908000000006697218399" in payload
     assert f"AM:{Decimal(str(invoice_payload['total'])):.2f}" in payload
     assert f"X-VS:{invoice_payload['variable_symbol']}" in payload
     assert generator.last_spayd_payload == payload
     assert document.content.startswith(b"%PDF")
-    assert "příliš" in export.note or "kun" in (export.note or "").lower() or "žluť" in (export.note or "")
+    assert "příliš" in export.note or "žluť" in (export.note or "")
+    from app.pdf_invoice import resolve_issuer_bic
+
+    assert resolve_issuer_bic("0800", "KOMBCZPP") == "GIBACZPX"

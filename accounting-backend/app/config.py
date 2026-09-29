@@ -74,13 +74,14 @@ class Settings(BaseSettings):
         default=Path(__file__).resolve().parent.parent / "assets" / "pvm-deal-logo.png",
         validation_alias="ACCOUNTING_LOGO_PATH",
     )
-    accounting_issuer_bic: str = Field(default="KOMBCZPPXXX", validation_alias="ACCOUNTING_ISSUER_BIC")
+    # Default BIC = Česká spořitelna (0800) – matches production account 6697218399/0800.
+    accounting_issuer_bic: str = Field(default="GIBACZPX", validation_alias="ACCOUNTING_ISSUER_BIC")
     accounting_issuer_website: str = Field(
         default="https://pvm-deal.cz",
         validation_alias="ACCOUNTING_ISSUER_WEBSITE",
     )
     accounting_issuer_phone_fallback: str = Field(
-        default="+420 000 000 000",
+        default="+420777863255",
         validation_alias="ACCOUNTING_ISSUER_PHONE_FALLBACK",
     )
 

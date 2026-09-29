@@ -48,6 +48,7 @@ EMPTY_INVOICE_SETTINGS_RESPONSE = {
     "default_currency": "CZK",
     "default_due_days": 14,
     "default_note": None,
+    "vat_enabled": False,
     "payment_method": "Převodem",
     "bank_account_number": "",
     "bank_account_prefix": None,

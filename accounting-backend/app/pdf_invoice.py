@@ -27,9 +27,30 @@ class InvoicePdfBranding:
     logo_path: Path | None = None
 
 
+# Czech bank code → BIC/SWIFT (without optional XXX branch suffix).
+_CZECH_BANK_BIC: dict[str, str] = {
+    "0100": "KOMBCZPP",  # Komerční banka
+    "0300": "CEKOCZPP",  # ČSOB
+    "0600": "AGBACZPP",  # Moneta
+    "0800": "GIBACZPX",  # Česká spořitelna
+    "2010": "FIOBCZPP",  # Fio
+    "3030": "AIRACZPP",  # Air Bank
+    "5500": "RZBCCZPP",  # Raiffeisenbank
+    "6210": "BREXCZPP",  # mBank
+}
+
+
 def sanitize_invoice_pdf_filename(invoice_number: str) -> str:
     cleaned = re.sub(r"[^0-9A-Za-z_-]+", "-", (invoice_number or "draft").strip()) or "draft"
     return f"invoice-{cleaned}.pdf"
+
+
+def resolve_issuer_bic(bank_code: str, configured_bic: str = "") -> str:
+    """Prefer BIC derived from bank code; fall back to host branding."""
+    mapped = _CZECH_BANK_BIC.get((bank_code or "").strip().zfill(4) if (bank_code or "").strip() else "")
+    if mapped:
+        return mapped
+    return (configured_bic or "").strip().upper()
 
 
 def resolve_invoice_iban(export: InvoiceExportDTO) -> str:
@@ -229,9 +250,10 @@ class ReportLabInvoicePdfGenerator:
             [Paragraph("Účet", muted_style), Paragraph(_escape(export.payment.account_label), body_style)],
             [Paragraph("IBAN", muted_style), Paragraph(_escape(resolve_invoice_iban(export)), body_style)],
         ]
-        if self._branding.issuer_bic.strip():
+        bic = resolve_issuer_bic(export.payment.bank_code, self._branding.issuer_bic)
+        if bic:
             meta_data.append(
-                [Paragraph("BIC/SWIFT", muted_style), Paragraph(_escape(self._branding.issuer_bic), body_style)]
+                [Paragraph("BIC/SWIFT", muted_style), Paragraph(_escape(bic), body_style)]
             )
         meta = Table(meta_data, colWidths=[45 * mm, 125 * mm])
         meta.setStyle(
@@ -248,18 +270,41 @@ class ReportLabInvoicePdfGenerator:
         story.append(Spacer(1, 4 * mm))
 
         show_vat = export.tax_mode != "reverse_charge" and Decimal(export.totals.vat_amount) > 0
-        item_header = ["Popis", "Množství", "Jedn. cena", "Základ"]
+        item_header = (
+            ["Popis", "Množství", "Cena bez DPH", "DPH", "Celkem"]
+            if show_vat
+            else ["Popis", "Množství", "Jedn. cena", "Celkem"]
+        )
         rows: list[list[object]] = [[Paragraph(_escape(h), muted_style) for h in item_header]]
         for item in export.items:
-            rows.append(
-                [
-                    Paragraph(_escape(item.description), body_style),
-                    Paragraph(_fmt_qty(Decimal(item.quantity)), right_style),
-                    Paragraph(_fmt_money(Decimal(item.unit_price)), right_style),
-                    Paragraph(_fmt_money(Decimal(item.line_total)), right_style),
-                ]
-            )
-        col_widths = [90 * mm, 25 * mm, 30 * mm, 29 * mm]
+            if show_vat:
+                line_base = Decimal(item.line_total)
+                rate = Decimal(export.totals.vat_rate or 0)
+                line_vat = _quantize_line_vat(line_base, rate)
+                line_gross = line_base + line_vat
+                rows.append(
+                    [
+                        Paragraph(_escape(item.description), body_style),
+                        Paragraph(_fmt_qty(Decimal(item.quantity)), right_style),
+                        Paragraph(_fmt_money(line_base), right_style),
+                        Paragraph(_fmt_money(line_vat), right_style),
+                        Paragraph(_fmt_money(line_gross), right_style),
+                    ]
+                )
+            else:
+                rows.append(
+                    [
+                        Paragraph(_escape(item.description), body_style),
+                        Paragraph(_fmt_qty(Decimal(item.quantity)), right_style),
+                        Paragraph(_fmt_money(Decimal(item.unit_price)), right_style),
+                        Paragraph(_fmt_money(Decimal(item.line_total)), right_style),
+                    ]
+                )
+        col_widths = (
+            [70 * mm, 22 * mm, 28 * mm, 25 * mm, 29 * mm]
+            if show_vat
+            else [90 * mm, 25 * mm, 30 * mm, 29 * mm]
+        )
 
         items_table = Table(rows, colWidths=col_widths, repeatRows=1)
         items_table.setStyle(
@@ -303,6 +348,13 @@ class ReportLabInvoicePdfGenerator:
                 [
                     Paragraph("Režim DPH", body_style),
                     Paragraph(_escape(export.reverse_charge_text or "Přenesená daňová povinnost"), right_style),
+                ]
+            )
+        else:
+            totals_rows.append(
+                [
+                    Paragraph("Režim DPH", body_style),
+                    Paragraph("Bez DPH", right_style),
                 ]
             )
         totals_rows.append(
@@ -360,18 +412,19 @@ def _register_czech_fonts() -> tuple[str, str]:
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
 
+    # Prefer DejaVu on Linux/Docker (production); Arial on Windows local.
     candidates = [
-        (
-            Path(r"C:\Windows\Fonts\arial.ttf"),
-            Path(r"C:\Windows\Fonts\arialbd.ttf"),
-            "PvmArial",
-            "PvmArialBold",
-        ),
         (
             Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
             Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
             "PvmDejaVu",
             "PvmDejaVuBold",
+        ),
+        (
+            Path(r"C:\Windows\Fonts\arial.ttf"),
+            Path(r"C:\Windows\Fonts\arialbd.ttf"),
+            "PvmArial",
+            "PvmArialBold",
         ),
         (
             Path("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"),
@@ -382,12 +435,15 @@ def _register_czech_fonts() -> tuple[str, str]:
     ]
     for regular, bold, regular_name, bold_name in candidates:
         if regular.is_file() and bold.is_file():
-            if regular_name not in pdfmetrics.getRegisteredFontNames():
+            registered = set(pdfmetrics.getRegisteredFontNames())
+            if regular_name not in registered:
                 pdfmetrics.registerFont(TTFont(regular_name, str(regular)))
+            if bold_name not in registered:
                 pdfmetrics.registerFont(TTFont(bold_name, str(bold)))
             return regular_name, bold_name
-    # Last resort: Helvetica (may break Czech glyphs)
-    return "Helvetica", "Helvetica-Bold"
+    raise InvoicePdfGenerationError(
+        "Chybí font s podporou češtiny (DejaVu/Arial). PDF by zobrazovalo poškozené háčky a čárky."
+    )
 
 
 def _build_logo_image(logo_path: Path | None, *, max_width: float, max_height: float):
@@ -473,3 +529,7 @@ def _fmt_money(value: Decimal) -> str:
 def _fmt_qty(value: Decimal) -> str:
     text = f"{Decimal(value):.3f}".rstrip("0").rstrip(".")
     return text.replace(".", ",")
+
+
+def _quantize_line_vat(line_base: Decimal, rate: Decimal) -> Decimal:
+    return (Decimal(line_base) * Decimal(rate) / Decimal("100")).quantize(Decimal("0.01"))
