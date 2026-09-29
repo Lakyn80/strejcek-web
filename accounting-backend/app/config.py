@@ -49,7 +49,7 @@ class Settings(BaseSettings):
         validation_alias="ADMIN_ALLOWED_ORIGINS",
     )
 
-    accounting_email_provider: Literal["console", "smtp", "disabled"] = Field(
+    accounting_email_provider: Literal["console", "smtp", "resend", "disabled"] = Field(
         default="console",
         validation_alias="ACCOUNTING_EMAIL_PROVIDER",
     )
@@ -59,12 +59,32 @@ class Settings(BaseSettings):
     accounting_smtp_user: str = Field(default="", validation_alias="ACCOUNTING_SMTP_USER")
     accounting_smtp_password: str = Field(default="", validation_alias="ACCOUNTING_SMTP_PASSWORD")
     accounting_smtp_use_tls: bool = Field(default=True, validation_alias="ACCOUNTING_SMTP_USE_TLS")
+    resend_api_key: str = Field(default="", validation_alias="RESEND_API_KEY")
+    resend_from_email: str = Field(default="", validation_alias="RESEND_FROM_EMAIL")
+    resend_from_name: str = Field(default="PVM Deal", validation_alias="RESEND_FROM_NAME")
+    accounting_invoice_copy_email: str = Field(
+        default="robin.strejcek@centrum.cz",
+        validation_alias="ACCOUNTING_INVOICE_COPY_EMAIL",
+    )
     accounting_ares_provider: Literal["mock", "real"] = Field(
         default="mock",
         validation_alias="ACCOUNTING_ARES_PROVIDER",
     )
+    accounting_logo_path: Path = Field(
+        default=Path(__file__).resolve().parent.parent / "assets" / "pvm-deal-logo.png",
+        validation_alias="ACCOUNTING_LOGO_PATH",
+    )
+    accounting_issuer_bic: str = Field(default="KOMBCZPPXXX", validation_alias="ACCOUNTING_ISSUER_BIC")
+    accounting_issuer_website: str = Field(
+        default="https://pvm-deal.cz",
+        validation_alias="ACCOUNTING_ISSUER_WEBSITE",
+    )
+    accounting_issuer_phone_fallback: str = Field(
+        default="+420 000 000 000",
+        validation_alias="ACCOUNTING_ISSUER_PHONE_FALLBACK",
+    )
 
-    @field_validator("accounting_storage_path", mode="before")
+    @field_validator("accounting_storage_path", "accounting_logo_path", mode="before")
     @classmethod
     def _coerce_storage_path(cls, value: object) -> Path:
         if isinstance(value, Path):

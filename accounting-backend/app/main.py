@@ -153,9 +153,13 @@ def _configure_integrations(settings: Settings) -> None:
     from accounting_api.adapters.email.smtp import SmtpEmailAdapter
     from accounting_api.integrations.ares.provider import MockAresProvider, configure_ares_provider
     from accounting_api.integrations.email import configure_email_port
+    from accounting_api.integrations.pdf import configure_pdf_generator
     from accounting_api.integrations.storage import set_storage_root
 
-    set_storage_root(settings.ensure_storage_directory())
+    from app.pdf_invoice import InvoicePdfBranding, ReportLabInvoicePdfGenerator
+
+    storage_root = settings.ensure_storage_directory()
+    set_storage_root(storage_root)
 
     if settings.accounting_email_provider == "console":
         configure_email_port(ConsoleEmailAdapter(from_address=settings.accounting_email_from))
@@ -170,6 +174,17 @@ def _configure_integrations(settings: Settings) -> None:
                 use_tls=settings.accounting_smtp_use_tls,
             )
         )
+    elif settings.accounting_email_provider == "resend":
+        from app.email_resend import ResendEmailAdapter
+
+        configure_email_port(
+            ResendEmailAdapter(
+                api_key=settings.resend_api_key,
+                from_email=settings.resend_from_email,
+                from_name=settings.resend_from_name,
+                always_bcc=(settings.accounting_invoice_copy_email,),
+            )
+        )
     else:
         configure_email_port(None)
 
@@ -179,6 +194,25 @@ def _configure_integrations(settings: Settings) -> None:
         from app.ares_real import RealAresProvider
 
         configure_ares_provider(RealAresProvider())
+
+    logo_path = settings.accounting_logo_path.expanduser()
+    configure_pdf_generator(
+        ReportLabInvoicePdfGenerator(
+            branding=InvoicePdfBranding(
+                issuer_email=(
+                    settings.resend_from_email.strip()
+                    or settings.accounting_email_from.strip()
+                    or settings.admin_email.strip()
+                ),
+                issuer_phone=settings.accounting_issuer_phone_fallback.strip(),
+                issuer_bic=settings.accounting_issuer_bic.strip(),
+                issuer_website=settings.accounting_issuer_website.strip(),
+                logo_path=logo_path if logo_path.is_file() else None,
+            ),
+            storage_root=storage_root,
+            persist=True,
+        )
+    )
 
 
 def _ensure_sqlite_parent(database_url: str) -> None:
